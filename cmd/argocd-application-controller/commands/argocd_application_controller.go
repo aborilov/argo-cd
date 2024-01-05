@@ -65,7 +65,7 @@ func NewCommand() *cobra.Command {
 		applicationNamespaces    []string
 		persistResourceHealth    bool
 		shardingAlgorithm        string
-		ignoreNormalizerOpts             normalizers.IgnoreNormalizerOpts
+		ignoreNormalizerOpts     normalizers.IgnoreNormalizerOpts
 	)
 	var command = cobra.Command{
 		Use:               cliName,
@@ -203,8 +203,10 @@ func NewCommand() *cobra.Command {
 	command.Flags().BoolVar(&persistResourceHealth, "persist-resource-health", env.ParseBoolFromEnv("ARGOCD_APPLICATION_CONTROLLER_PERSIST_RESOURCE_HEALTH", true), "Enables storing the managed resources health in the Application CRD")
 	command.Flags().StringVar(&shardingAlgorithm, "sharding-method", env.StringFromEnv(common.EnvControllerShardingAlgorithm, common.DefaultShardingAlgorithm), "Enables choice of sharding method. Supported sharding methods are : [legacy, round-robin] ")
 	command.Flags().DurationVar(&ignoreNormalizerOpts.JQExecutionTimeout, "ignore-normalizer-jq-execution-timeout-seconds", env.ParseDurationFromEnv("ARGOCD_IGNORE_NORMALIZER_JQ_TIMEOUT", 0*time.Second, 0, math.MaxInt64), "Set ignore normalizer JQ execution timeout")
-	cacheSrc = appstatecache.AddCacheFlagsToCmd(&command, func(client *redis.Client) {
-		redisClient = client
+	cacheSrc = appstatecache.AddCacheFlagsToCmd(&command, cacheutil.Options{
+		OnClientCreated: func(client *redis.Client) {
+			redisClient = client
+		},
 	})
 	return &command
 }
